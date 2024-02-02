@@ -68,36 +68,59 @@ app.MapDelete("/user/{id}", async (int id, ChatRoomDb db) =>
 
 //Chat CRUD
 
-//app.MapGet("/chat/{participantId}", async (int participantId, ChatRoomDb db) =>
-//{
-//    var participant = await db.Users.FirstOrDefaultAsync(x => x.Id == participantId);
-//    if (participant != null)
-//    {
-//        var chats = await db.Chats.Where(x => x.Participants.Contains(participant)).ToListAsync();
+app.MapGet("/chat/{participantId}", async (int participantId, ChatRoomDb db) =>
+{
+    var participant = await db.Users.FirstOrDefaultAsync(p => p.Id == participantId);
+    if (participant != null)
+    {
+        var chatIds = await db.UsersChats
+            .Where(c => c.UserId == participantId)
+            .Select(c => c.ChatId)
+            .ToListAsync();
 
-//        if (chats.Any())
-//        {
-//            return Results.Ok(chats);
-//        }
-//    }
-//    return Results.NotFound();
-//});
+        var chats = await db.Chats
+            .Include(c => c.Participants)
+            .Include(c => c.Messages)
+            .Where(c => chatIds.Contains(c.Id))
+            .ToListAsync();
 
-//app.MapPost("/chat/{userIds}", async (string userIds, ChatRoomDb db) =>
-//{
-//    var participantIds = userIds.Split(',').Select(int.Parse).ToList();
+        if (chats.Any())
+        {
+            return Results.Ok(chats);
+        }
+        return Results.NotFound();
+    }
 
-//    var participants = await db.Users.Where(u => participantIds.Contains(u.Id)).ToListAsync();
+    return Results.NotFound();
+});
 
-//    var chat = new Chat();
-//    chat.Participants = participants;
-//    chat.Messages = new List<Message>();
 
-//    db.Chats.Add(chat);
-//    await db.SaveChangesAsync();
+app.MapPost("/chat/{userIds}", async (string userIds, ChatRoomDb db) =>
+{
+    var participantIds = userIds.Split(',').Select(int.Parse).ToList();
 
-//    return Results.Created($"/chat/{chat.Id}", chat);
-//});
+    var participants = await db.Users
+        .Where(u => participantIds.Contains(u.Id))
+        .ToListAsync();
+
+    if (participants.Count != participantIds.Count)
+    {
+        return Results.NotFound();
+    }
+
+    var chat = new Chat
+    {
+        Participants = participants.Select(u => new UserChat { UserId = u.Id, User = u }).ToList(),
+        Messages = new List<Message>()
+    };
+
+    db.Chats.Add(chat);
+    await db.SaveChangesAsync();
+
+    return Results.Created($"/chat/{chat.Id}", chat);
+
+});
+
 
 app.MapDelete("/chat/{id}", async (int id, ChatRoomDb db) =>
 {

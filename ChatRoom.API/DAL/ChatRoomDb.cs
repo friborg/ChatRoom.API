@@ -27,6 +27,7 @@ namespace ChatRoom.API.DAL
                 .WithMany(c => c.Participants)
                 .HasForeignKey(uc => uc.ChatId);
 
+
             base.OnModelCreating(modelBuilder);
         }
     }
