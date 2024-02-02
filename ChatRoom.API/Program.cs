@@ -35,6 +35,11 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 
 //User CRUD
+app.MapGet("/user", async (ChatRoomDb db) =>
+{
+    return await db.Users.ToListAsync();
+});
+
 app.MapGet("/user/{username}", async (string username, ChatRoomDb db) =>
     await db.Users.FirstOrDefaultAsync(x => x.Username == username)
         is User user
@@ -62,28 +67,37 @@ app.MapDelete("/user/{id}", async (int id, ChatRoomDb db) =>
 });
 
 //Chat CRUD
-app.MapGet("/chat/{participantId}", async (int participantId, ChatRoomDb db) =>
-{
-    var participant = await db.Users.FirstOrDefaultAsync(x => x.Id == participantId);
-    if (participant != null)
-    {
-        var chats = await db.Chats.Where(x => x.Participants.Contains(participant)).ToListAsync();
 
-        if (chats.Any())
-        {
-            return Results.Ok(chats);
-        }
-    }
-    return Results.NotFound();
-});
+//app.MapGet("/chat/{participantId}", async (int participantId, ChatRoomDb db) =>
+//{
+//    var participant = await db.Users.FirstOrDefaultAsync(x => x.Id == participantId);
+//    if (participant != null)
+//    {
+//        var chats = await db.Chats.Where(x => x.Participants.Contains(participant)).ToListAsync();
 
-app.MapPost("/chat", async (Chat chat, ChatRoomDb db) =>
-{
-    db.Chats.Add(chat);
-    await db.SaveChangesAsync();
+//        if (chats.Any())
+//        {
+//            return Results.Ok(chats);
+//        }
+//    }
+//    return Results.NotFound();
+//});
 
-    return Results.Created($"/chat/{chat.Id}", chat);
-});
+//app.MapPost("/chat/{userIds}", async (string userIds, ChatRoomDb db) =>
+//{
+//    var participantIds = userIds.Split(',').Select(int.Parse).ToList();
+
+//    var participants = await db.Users.Where(u => participantIds.Contains(u.Id)).ToListAsync();
+
+//    var chat = new Chat();
+//    chat.Participants = participants;
+//    chat.Messages = new List<Message>();
+
+//    db.Chats.Add(chat);
+//    await db.SaveChangesAsync();
+
+//    return Results.Created($"/chat/{chat.Id}", chat);
+//});
 
 app.MapDelete("/chat/{id}", async (int id, ChatRoomDb db) =>
 {

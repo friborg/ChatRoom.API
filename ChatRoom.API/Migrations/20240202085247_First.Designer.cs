@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace ChatRoom.API.Migrations
 {
     [DbContext(typeof(ChatRoomDb))]
-    [Migration("20240131091027_FirstMigration")]
-    partial class FirstMigration
+    [Migration("20240202085247_First")]
+    partial class First
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -49,9 +49,6 @@ namespace ChatRoom.API.Migrations
                     b.Property<int?>("ChatId")
                         .HasColumnType("int");
 
-                    b.Property<int>("SentFromId")
-                        .HasColumnType("int");
-
                     b.Property<string>("Text")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -62,8 +59,6 @@ namespace ChatRoom.API.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("ChatId");
-
-                    b.HasIndex("SentFromId");
 
                     b.ToTable("Messages");
                 });
@@ -76,8 +71,9 @@ namespace ChatRoom.API.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<int?>("ChatId")
-                        .HasColumnType("int");
+                    b.Property<string>("Password")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Username")
                         .IsRequired()
@@ -85,9 +81,22 @@ namespace ChatRoom.API.Migrations
 
                     b.HasKey("Id");
 
+                    b.ToTable("Users");
+                });
+
+            modelBuilder.Entity("ChatRoom.API.Models.UserChat", b =>
+                {
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("ChatId")
+                        .HasColumnType("int");
+
+                    b.HasKey("UserId", "ChatId");
+
                     b.HasIndex("ChatId");
 
-                    b.ToTable("Users");
+                    b.ToTable("UsersChats");
                 });
 
             modelBuilder.Entity("ChatRoom.API.Models.Message", b =>
@@ -95,21 +104,25 @@ namespace ChatRoom.API.Migrations
                     b.HasOne("ChatRoom.API.Models.Chat", null)
                         .WithMany("Messages")
                         .HasForeignKey("ChatId");
+                });
 
-                    b.HasOne("ChatRoom.API.Models.User", "SentFrom")
-                        .WithMany()
-                        .HasForeignKey("SentFromId")
+            modelBuilder.Entity("ChatRoom.API.Models.UserChat", b =>
+                {
+                    b.HasOne("ChatRoom.API.Models.Chat", "Chat")
+                        .WithMany("Participants")
+                        .HasForeignKey("ChatId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("SentFrom");
-                });
+                    b.HasOne("ChatRoom.API.Models.User", "User")
+                        .WithMany("ParticipatedChats")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
-            modelBuilder.Entity("ChatRoom.API.Models.User", b =>
-                {
-                    b.HasOne("ChatRoom.API.Models.Chat", null)
-                        .WithMany("Participants")
-                        .HasForeignKey("ChatId");
+                    b.Navigation("Chat");
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("ChatRoom.API.Models.Chat", b =>
@@ -117,6 +130,11 @@ namespace ChatRoom.API.Migrations
                     b.Navigation("Messages");
 
                     b.Navigation("Participants");
+                });
+
+            modelBuilder.Entity("ChatRoom.API.Models.User", b =>
+                {
+                    b.Navigation("ParticipatedChats");
                 });
 #pragma warning restore 612, 618
         }

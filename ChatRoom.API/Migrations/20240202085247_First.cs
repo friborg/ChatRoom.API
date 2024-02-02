@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace ChatRoom.API.Migrations
 {
     /// <inheritdoc />
-    public partial class FirstMigration : Migration
+    public partial class First : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -30,16 +30,11 @@ namespace ChatRoom.API.Migrations
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     Username = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    ChatId = table.Column<int>(type: "int", nullable: true)
+                    Password = table.Column<string>(type: "nvarchar(max)", nullable: false)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Users", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_Users_Chats_ChatId",
-                        column: x => x.ChatId,
-                        principalTable: "Chats",
-                        principalColumn: "Id");
                 });
 
             migrationBuilder.CreateTable(
@@ -49,7 +44,6 @@ namespace ChatRoom.API.Migrations
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     Text = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    SentFromId = table.Column<int>(type: "int", nullable: false),
                     TimeStamp = table.Column<DateTime>(type: "datetime2", nullable: false),
                     ChatId = table.Column<int>(type: "int", nullable: true)
                 },
@@ -61,9 +55,27 @@ namespace ChatRoom.API.Migrations
                         column: x => x.ChatId,
                         principalTable: "Chats",
                         principalColumn: "Id");
+                });
+
+            migrationBuilder.CreateTable(
+                name: "UsersChats",
+                columns: table => new
+                {
+                    UserId = table.Column<int>(type: "int", nullable: false),
+                    ChatId = table.Column<int>(type: "int", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_UsersChats", x => new { x.UserId, x.ChatId });
                     table.ForeignKey(
-                        name: "FK_Messages_Users_SentFromId",
-                        column: x => x.SentFromId,
+                        name: "FK_UsersChats_Chats_ChatId",
+                        column: x => x.ChatId,
+                        principalTable: "Chats",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_UsersChats_Users_UserId",
+                        column: x => x.UserId,
                         principalTable: "Users",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
@@ -75,13 +87,8 @@ namespace ChatRoom.API.Migrations
                 column: "ChatId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Messages_SentFromId",
-                table: "Messages",
-                column: "SentFromId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_Users_ChatId",
-                table: "Users",
+                name: "IX_UsersChats_ChatId",
+                table: "UsersChats",
                 column: "ChatId");
         }
 
@@ -92,10 +99,13 @@ namespace ChatRoom.API.Migrations
                 name: "Messages");
 
             migrationBuilder.DropTable(
-                name: "Users");
+                name: "UsersChats");
 
             migrationBuilder.DropTable(
                 name: "Chats");
+
+            migrationBuilder.DropTable(
+                name: "Users");
         }
     }
 }
