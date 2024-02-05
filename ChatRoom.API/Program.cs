@@ -70,29 +70,33 @@ app.MapDelete("/user/{id}", async (int id, ChatRoomDb db) =>
 
 app.MapGet("/chat/{participantId}", async (int participantId, ChatRoomDb db) =>
 {
-    var participant = await db.Users.FirstOrDefaultAsync(p => p.Id == participantId);
+    var participant = await db.Users
+        .Include(u => u.Chats)
+        .FirstOrDefaultAsync(p => p.Id == participantId);
+
     if (participant != null)
     {
-        var chatIds = await db.UsersChats
-            .Where(c => c.UserId == participantId)
-            .Select(c => c.ChatId)
-            .ToListAsync();
-
-        var chats = await db.Chats
-            .Include(c => c.Participants)
-            .Include(c => c.Messages)
-            .Where(c => chatIds.Contains(c.Id))
-            .ToListAsync();
+        var chats = participant.Chats;
 
         if (chats.Any())
         {
-            return Results.Ok(chats);
+            // Include participants and messages for each chat
+            var chatIds = chats.Select(c => c.Id).ToList();
+            var populatedChats = await db.Chats
+                .Include(c => c.Participants)
+                .Include(c => c.Messages)
+                .Where(c => chatIds.Contains(c.Id))
+                .ToListAsync();
+
+            return Results.Ok(populatedChats);
         }
+
         return Results.NotFound();
     }
 
     return Results.NotFound();
 });
+
 
 
 app.MapPost("/chat/{userIds}", async (string userIds, ChatRoomDb db) =>
@@ -110,7 +114,7 @@ app.MapPost("/chat/{userIds}", async (string userIds, ChatRoomDb db) =>
 
     var chat = new Chat
     {
-        Participants = participants.Select(u => new UserChat { UserId = u.Id, User = u }).ToList(),
+        Participants = participants,
         Messages = new List<Message>()
     };
 
@@ -125,7 +129,7 @@ app.MapDelete("/chat/{id}", async (int id, ChatRoomDb db) =>
 {
     if (await db.Chats.FindAsync(id) is Chat chat)
     {
-        db.Chats.Remove(chat); 
+        db.Chats.Remove(chat);
         await db.SaveChangesAsync();
         return Results.NoContent();
     }
@@ -134,7 +138,7 @@ app.MapDelete("/chat/{id}", async (int id, ChatRoomDb db) =>
 });
 
 //Message CRUD
-app.MapGet("/message/{chatId}", async (int chatId, ChatRoomDb db) =>
+app.MapGet("/message/{chatId}", async (int chatId, ChatRoomDb db) => //gör med userID istället
 {
     return await db.Messages.Where(m => m.Id == chatId).ToListAsync();
 });

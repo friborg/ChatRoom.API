@@ -4,6 +4,6 @@
     {
         public int Id { get; set; }
         public List<Message> Messages { get; set; } = new List<Message>();
-        public List<UserChat> Participants { get; set; } = new List<UserChat>();
+        public List<User> Participants { get; set; } = new List<User>();
     }
 }

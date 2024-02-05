@@ -4,6 +4,7 @@ using ChatRoom.API.DAL;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace ChatRoom.API.Migrations
 {
     [DbContext(typeof(ChatRoomDb))]
-    partial class ChatRoomDbModelSnapshot : ModelSnapshot
+    [Migration("20240205085155_First")]
+    partial class First
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -70,6 +73,9 @@ namespace ChatRoom.API.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<int?>("ChatId")
+                        .HasColumnType("int");
+
                     b.Property<string>("Password")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -80,22 +86,24 @@ namespace ChatRoom.API.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("ChatId");
+
                     b.ToTable("Users");
                 });
 
-            modelBuilder.Entity("ChatUser", b =>
+            modelBuilder.Entity("ChatRoom.API.Models.UserChat", b =>
                 {
-                    b.Property<int>("ChatsId")
+                    b.Property<int>("UserId")
                         .HasColumnType("int");
 
-                    b.Property<int>("ParticipantsId")
+                    b.Property<int>("ChatId")
                         .HasColumnType("int");
 
-                    b.HasKey("ChatsId", "ParticipantsId");
+                    b.HasKey("UserId", "ChatId");
 
-                    b.HasIndex("ParticipantsId");
+                    b.HasIndex("ChatId");
 
-                    b.ToTable("ChatUser");
+                    b.ToTable("UsersChats");
                 });
 
             modelBuilder.Entity("ChatRoom.API.Models.Message", b =>
@@ -113,24 +121,37 @@ namespace ChatRoom.API.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("ChatUser", b =>
+            modelBuilder.Entity("ChatRoom.API.Models.User", b =>
                 {
                     b.HasOne("ChatRoom.API.Models.Chat", null)
+                        .WithMany("Participants")
+                        .HasForeignKey("ChatId");
+                });
+
+            modelBuilder.Entity("ChatRoom.API.Models.UserChat", b =>
+                {
+                    b.HasOne("ChatRoom.API.Models.Chat", "Chat")
                         .WithMany()
-                        .HasForeignKey("ChatsId")
+                        .HasForeignKey("ChatId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("ChatRoom.API.Models.User", null)
+                    b.HasOne("ChatRoom.API.Models.User", "User")
                         .WithMany()
-                        .HasForeignKey("ParticipantsId")
+                        .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.Navigation("Chat");
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("ChatRoom.API.Models.Chat", b =>
                 {
                     b.Navigation("Messages");
+
+                    b.Navigation("Participants");
                 });
 #pragma warning restore 612, 618
         }

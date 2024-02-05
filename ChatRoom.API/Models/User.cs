@@ -5,6 +5,7 @@
         public int Id { get; set; }
         public string Username { get; set; }
         public string Password { get; set; }
-        public List<UserChat> ParticipatedChats { get; set; } = new List<UserChat>();
+
+        public List<Chat> Chats { get; set; } = new List<Chat>();
     }
 }
