@@ -105,7 +105,7 @@ app.MapPost("/chat/{userIds}", async (string userIds, ChatRoomDb db) =>
 
     if (participants.Count != participantIds.Count)
     {
-        return Results.NotFound();
+        return Results.NotFound("One or more participants not found");
     }
 
     var chat = new Chat
@@ -118,7 +118,6 @@ app.MapPost("/chat/{userIds}", async (string userIds, ChatRoomDb db) =>
     await db.SaveChangesAsync();
 
     return Results.Created($"/chat/{chat.Id}", chat);
-
 });
 
 
@@ -126,7 +125,7 @@ app.MapDelete("/chat/{id}", async (int id, ChatRoomDb db) =>
 {
     if (await db.Chats.FindAsync(id) is Chat chat)
     {
-        db.Chats.Remove(chat); // cascade messages ?
+        db.Chats.Remove(chat); 
         await db.SaveChangesAsync();
         return Results.NoContent();
     }
@@ -135,11 +134,10 @@ app.MapDelete("/chat/{id}", async (int id, ChatRoomDb db) =>
 });
 
 //Message CRUD
-app.MapGet("/message/{id}", async (int id, ChatRoomDb db) =>
-    await db.Messages.FindAsync(id)
-        is Message message
-            ? Results.Ok(message)
-            : Results.NotFound());
+app.MapGet("/message/{chatId}", async (int chatId, ChatRoomDb db) =>
+{
+    return await db.Messages.Where(m => m.Id == chatId).ToListAsync();
+});
 
 app.MapPost("/message", async (Message message, ChatRoomDb db) =>
 {
