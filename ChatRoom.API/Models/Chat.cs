@@ -1,4 +1,6 @@
-﻿namespace ChatRoom.API.Models
+﻿using System.Text.Json.Serialization;
+
+namespace ChatRoom.API.Models
 {
     public class Chat
     {

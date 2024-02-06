@@ -35,6 +35,21 @@ namespace ChatRoom.API.Migrations
                     b.ToTable("Chats");
                 });
 
+            modelBuilder.Entity("ChatRoom.API.Models.ChatUser", b =>
+                {
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("ChatId")
+                        .HasColumnType("int");
+
+                    b.HasKey("UserId", "ChatId");
+
+                    b.HasIndex("ChatId");
+
+                    b.ToTable("ChatsUsers");
+                });
+
             modelBuilder.Entity("ChatRoom.API.Models.Message", b =>
                 {
                     b.Property<int>("Id")
@@ -83,19 +98,23 @@ namespace ChatRoom.API.Migrations
                     b.ToTable("Users");
                 });
 
-            modelBuilder.Entity("ChatUser", b =>
+            modelBuilder.Entity("ChatRoom.API.Models.ChatUser", b =>
                 {
-                    b.Property<int>("ChatsId")
-                        .HasColumnType("int");
+                    b.HasOne("ChatRoom.API.Models.Chat", "Chat")
+                        .WithMany("Participants")
+                        .HasForeignKey("ChatId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
-                    b.Property<int>("ParticipantsId")
-                        .HasColumnType("int");
+                    b.HasOne("ChatRoom.API.Models.User", "User")
+                        .WithMany("Chats")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
-                    b.HasKey("ChatsId", "ParticipantsId");
+                    b.Navigation("Chat");
 
-                    b.HasIndex("ParticipantsId");
-
-                    b.ToTable("ChatUser");
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("ChatRoom.API.Models.Message", b =>
@@ -113,24 +132,16 @@ namespace ChatRoom.API.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("ChatUser", b =>
-                {
-                    b.HasOne("ChatRoom.API.Models.Chat", null)
-                        .WithMany()
-                        .HasForeignKey("ChatsId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("ChatRoom.API.Models.User", null)
-                        .WithMany()
-                        .HasForeignKey("ParticipantsId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-                });
-
             modelBuilder.Entity("ChatRoom.API.Models.Chat", b =>
                 {
                     b.Navigation("Messages");
+
+                    b.Navigation("Participants");
+                });
+
+            modelBuilder.Entity("ChatRoom.API.Models.User", b =>
+                {
+                    b.Navigation("Chats");
                 });
 #pragma warning restore 612, 618
         }

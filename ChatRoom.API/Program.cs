@@ -41,10 +41,18 @@ app.MapGet("/user", async (ChatRoomDb db) =>
 });
 
 app.MapGet("/user/{username}", async (string username, ChatRoomDb db) =>
-    await db.Users.FirstOrDefaultAsync(x => x.Username == username)
-        is User user
-            ? Results.Ok(user)
-            : Results.NotFound());
+{
+    var user = await db.Users
+        .FirstOrDefaultAsync(x => x.Username == username);
+
+    if (user != null)
+    {
+        return Results.Ok(user);
+    }
+
+    return Results.NotFound();
+});
+
 
 app.MapPost("/user", async (User user, ChatRoomDb db) =>
 {
@@ -71,33 +79,29 @@ app.MapDelete("/user/{id}", async (int id, ChatRoomDb db) =>
 app.MapGet("/chat/{participantId}", async (int participantId, ChatRoomDb db) =>
 {
     var participant = await db.Users
-        .Include(u => u.Chats)
         .FirstOrDefaultAsync(p => p.Id == participantId);
 
     if (participant != null)
     {
-        var chats = participant.Chats;
+        var chatIds = await db.ChatsUsers
+            .Where(uc => uc.UserId == participant.Id)
+            .Select(uc => uc.ChatId)
+            .ToListAsync();
 
-        if (chats.Any())
+        var populatedChats = await db.Chats
+            .Include(c => c.Participants)
+            .Include(c => c.Messages)
+            .Where(c => chatIds.Contains(c.Id))
+            .ToListAsync();
+
+        if (populatedChats.Any())
         {
-            // Include participants and messages for each chat
-            var chatIds = chats.Select(c => c.Id).ToList();
-            var populatedChats = await db.Chats
-                .Include(c => c.Participants)
-                .Include(c => c.Messages)
-                .Where(c => chatIds.Contains(c.Id))
-                .ToListAsync();
-
             return Results.Ok(populatedChats);
         }
-
-        return Results.NotFound();
     }
 
     return Results.NotFound();
 });
-
-
 
 app.MapPost("/chat/{userIds}", async (string userIds, ChatRoomDb db) =>
 {
@@ -123,6 +127,8 @@ app.MapPost("/chat/{userIds}", async (string userIds, ChatRoomDb db) =>
 
     return Results.Created($"/chat/{chat.Id}", chat);
 });
+
+
 
 
 app.MapDelete("/chat/{id}", async (int id, ChatRoomDb db) =>
