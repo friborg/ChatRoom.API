@@ -12,12 +12,5 @@ namespace ChatRoom.API.DAL
         public DbSet<Chat> Chats { get; set; }
         public DbSet<ChatUser> ChatsUsers { get; set; }
 
-        protected override void OnModelCreating(ModelBuilder modelBuilder)
-        {
-            modelBuilder.Entity<ChatUser>()
-                .HasKey(cu => new { cu.UserId, cu.ChatId });
-
-            base.OnModelCreating(modelBuilder);
-        }
     }
 }

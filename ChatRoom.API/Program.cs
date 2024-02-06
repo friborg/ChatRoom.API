@@ -75,15 +75,14 @@ app.MapDelete("/user/{id}", async (int id, ChatRoomDb db) =>
 });
 
 //Chat CRUD
-
 app.MapGet("/chat/{participantId}", async (int participantId, ChatRoomDb db) =>
 {
     var participant = await db.Users
-        .FirstOrDefaultAsync(p => p.Id == participantId);
+        .FirstOrDefaultAsync(p => p.Id == participantId); // blir rätt user
 
     if (participant != null)
     {
-        var chatIds = await db.ChatsUsers
+        var chatIds = await db.ChatsUsers // blir 0
             .Where(uc => uc.UserId == participant.Id)
             .Select(uc => uc.ChatId)
             .ToListAsync();
@@ -103,7 +102,7 @@ app.MapGet("/chat/{participantId}", async (int participantId, ChatRoomDb db) =>
     return Results.NotFound();
 });
 
-app.MapPost("/chat/{userIds}", async (string userIds, ChatRoomDb db) =>
+app.MapPost("/chat/{userIds}", async (string userIds, ChatRoomDb db) => // gör mer ChatUser istället? skapa chat objektet och participants först, sen lägg till ChatUser ? 
 {
     var participantIds = userIds.Split(',').Select(int.Parse).ToList();
 
@@ -123,12 +122,17 @@ app.MapPost("/chat/{userIds}", async (string userIds, ChatRoomDb db) =>
     };
 
     db.Chats.Add(chat);
-    await db.SaveChangesAsync();
+    try
+    {
+        await db.SaveChangesAsync(); // denna verkar ge error 500
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine(ex.ToString());
+    }
 
     return Results.Created($"/chat/{chat.Id}", chat);
 });
-
-
 
 
 app.MapDelete("/chat/{id}", async (int id, ChatRoomDb db) =>

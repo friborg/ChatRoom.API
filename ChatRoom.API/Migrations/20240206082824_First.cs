@@ -40,12 +40,14 @@ namespace ChatRoom.API.Migrations
                 name: "ChatsUsers",
                 columns: table => new
                 {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
                     UserId = table.Column<int>(type: "int", nullable: false),
                     ChatId = table.Column<int>(type: "int", nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_ChatsUsers", x => new { x.UserId, x.ChatId });
+                    table.PrimaryKey("PK_ChatsUsers", x => x.Id);
                     table.ForeignKey(
                         name: "FK_ChatsUsers_Chats_ChatId",
                         column: x => x.ChatId,
@@ -55,6 +57,30 @@ namespace ChatRoom.API.Migrations
                     table.ForeignKey(
                         name: "FK_ChatsUsers_Users_UserId",
                         column: x => x.UserId,
+                        principalTable: "Users",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.NoAction);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "ChatUser",
+                columns: table => new
+                {
+                    ChatsId = table.Column<int>(type: "int", nullable: false),
+                    ParticipantsId = table.Column<int>(type: "int", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_ChatUser", x => new { x.ChatsId, x.ParticipantsId });
+                    table.ForeignKey(
+                        name: "FK_ChatUser_Chats_ChatsId",
+                        column: x => x.ChatsId,
+                        principalTable: "Chats",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.NoAction);
+                    table.ForeignKey(
+                        name: "FK_ChatUser_Users_ParticipantsId",
+                        column: x => x.ParticipantsId,
                         principalTable: "Users",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.NoAction);
@@ -92,6 +118,16 @@ namespace ChatRoom.API.Migrations
                 column: "ChatId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_ChatsUsers_UserId",
+                table: "ChatsUsers",
+                column: "UserId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ChatUser_ParticipantsId",
+                table: "ChatUser",
+                column: "ParticipantsId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Messages_ChatId",
                 table: "Messages",
                 column: "ChatId");
@@ -107,6 +143,9 @@ namespace ChatRoom.API.Migrations
         {
             migrationBuilder.DropTable(
                 name: "ChatsUsers");
+
+            migrationBuilder.DropTable(
+                name: "ChatUser");
 
             migrationBuilder.DropTable(
                 name: "Messages");
